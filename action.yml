@@ -1,0 +1,92 @@
+name: 'Check .NET packages for vulnerabilities'
+description: 'Check .NET packages for vulnerabilities'
+inputs:
+  root_folder:
+    description: 'Root folder to check'
+    required: false
+    default: "."
+  output_file:
+    description: 'Output file for results'
+    required: false
+    default: "vuln.md"
+  fail_on_low:
+    description: 'Fail if low, moderate, or high severity vulnerabilities are found'
+    type: boolean
+    required: false
+    default: false
+  fail_on_moderate:
+    description: 'Fail if moderate or high severity vulnerabilities are found'
+    type: boolean
+    required: false
+    default: false
+  fail_on_high:
+    description: 'Fail if high severity vulnerabilities are found'
+    type: boolean
+    required: false
+    default: false
+  add_to_pr:
+    description: 'Add results to PR'
+    type: boolean
+    required: false
+    default: false
+  add_to_job_summary:
+    description: 'Add results to Job Summary'
+    type: boolean
+    required: false
+    default: true
+  
+runs:
+  using: 'composite'
+  steps:
+    - id: detect
+      run: |
+        cd ${{ inputs.root_folder }}
+        VULNERABILITIES=$(dotnet list package --vulnerable --include-transitive)
+        echo -e '```\n' > ./${{ inputs.output_file }}
+        echo "$VULNERABILITIES" >> ./${{ inputs.output_file }}
+        echo -e '\n```\n' >> ./${{ inputs.output_file }}
+        echo "$VULNERABILITIES"
+        if echo "$VULNERABILITIES" | grep -i -w -q 'High' && echo "$VULNERABILITIES" | grep -i -q 'has the following vulnerable packages'; then
+          echo "::warning::High severity vulnerabilities found!"
+          if ${{ inputs.fail_on_high }} || ${{ inputs.fail_on_moderate }} || ${{ inputs.fail_on_low }}; then
+            echo "VULN_FAIL=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+        fi
+        if echo "$VULNERABILITIES" | grep -i -w -q 'Moderate' && echo "$VULNERABILITIES" | grep -i -q 'has the following vulnerable packages'; then
+          echo "::warning::Moderate severity vulnerabilities found!"
+          if ${{ inputs.fail_on_moderate }} || ${{ inputs.fail_on_low }}; then
+            echo "VULN_FAIL=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+        fi
+        if echo "$VULNERABILITIES" | grep -i -w -q 'Low' && echo "$VULNERABILITIES" | grep -i -q 'has the following vulnerable packages'; then
+          echo "::warning::Low severity vulnerabilities found!"
+          if ${{ inputs.fail_on_low }}; then
+            echo "VULN_FAIL=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+        fi
+        echo "VULN_FAIL=false" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - id: pr
+      if: ${{ inputs.add_to_pr == 'true' }}
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        recreate: true
+        path: ${{ inputs.root_folder }}/${{ inputs.output_file }}
+
+    - id: jobsummary
+      run: |
+        if ${{ inputs.add_to_job_summary }}; then
+          cat ${{ inputs.root_folder }}/${{ inputs.output_file }} >> $GITHUB_STEP_SUMMARY
+        fi
+      shell: bash
+
+    - id: fail
+      run: |
+        if ${{ steps.detect.outputs.VULN_FAIL }}; then
+          exit 1
+        fi
+      shell: bash
