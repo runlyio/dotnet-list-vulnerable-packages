@@ -76,6 +76,7 @@ runs:
       with:
         recreate: true
         path: ${{ inputs.root_folder }}/${{ inputs.output_file }}
+        header: vulnscan
 
     - id: jobsummary
       run: |
