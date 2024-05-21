@@ -2,13 +2,15 @@
 
 This action uses `dotnet list package` to list vulnerable packages.
 
-- `add_to_pr`: If true, adds the results to the PR. Default: false
-- `add_to_job_summary`: If true, adds the results to the job summary. Default: true
-- `fail_on_low`: Fail step if low, moderate, or high severity vulnerabilities found. Default: false
-- `fail_on_moderate`: Fail step if moderate or high severity vulnerabilities found. Default: false
-- `fail_on_high`: Fail step if high severity vulnerabilities are found. Default: false
-- `output_file`: File that results will be saved to. Default: "vuln.md"
-- `root_folder`: Folder that contains the solution file. Default: "."
+| Input | Description | Default | Permission |
+| :- | :- | :- | :- |
+| add_to_pr | Adds the results to the PR | false | pull-requests: write |
+| add_to_job_summary | Adds the results to the workflow job summary | true | |
+| fail_on_low | Fails the workflow if low, moderate, or high severity vulnerabilities are found | false | |
+| fail_on_moderate | Fails the workflow if moderate or high severity vulnerabilities are found | false | |
+| fail_on_high | Fails the workflow if high severity vulnerabilities are found | false | |
+| output_file | Saves the results to specified file | "vuln.md" | |
+| root_folder | Folder that contains the solution file | "." | |
 
 # Usage
 ```
