@@ -1,5 +1,5 @@
-name: 'Check .NET packages for vulnerabilities'
-description: 'Check .NET packages for vulnerabilities'
+name: 'Check NuGet packages for vulnerabilities'
+description: 'Check NuGet packages for vulnerabilities'
 inputs:
   root_folder:
     description: 'Root folder to check'
@@ -8,7 +8,7 @@ inputs:
   output_file:
     description: 'Output file for results'
     required: false
-    default: "vuln.md"
+    default: "vuln-nuget.md"
   fail_on_low:
     description: 'Fail if low, moderate, high, or critical severity vulnerabilities are found'
     type: boolean
@@ -88,7 +88,7 @@ runs:
       with:
         recreate: true
         path: ${{ inputs.root_folder }}/${{ inputs.output_file }}
-        header: vulnscan
+        header: vulnnuget
 
     - id: jobsummary
       run: |
